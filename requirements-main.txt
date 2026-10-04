@@ -1,0 +1,16 @@
+# Main environment (.venv), Python 3.10.
+# torch comes from the PyTorch CUDA 12.6 index; the +cu126 wheel also runs on CPU-only machines.
+--extra-index-url https://download.pytorch.org/whl/cu126
+torch==2.14.1+cu126
+demucs==4.1.0
+yt-dlp==2026.8.19
+librosa==0.11.0
+numpy==2.2.6
+pretty_midi==0.2.11.post0
+soundfile==0.14.0
+# Roformer vocal separation and DrumSep drum part separation. Pulls onnxruntime (CPU) for
+# its ONNX models; the models we use are PyTorch checkpoints and run on CUDA through torch.
+audio-separator[cpu]==0.47.0
+onnxruntime==1.23.2
+# PyTorch port of ADTOF (drum transcription). Not on PyPI, pinned to a commit.
+adtof-pytorch @ git+https://github.com/xavriley/ADTOF-pytorch@85c192e78f716ea0b111cc8a5ee4a8f6a3a4f8a9

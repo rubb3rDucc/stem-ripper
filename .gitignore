@@ -1,0 +1,7 @@
+.venv/
+.venv-basicpitch/
+output/
+models/
+__pycache__/
+*.pyc
+test_song.wav
