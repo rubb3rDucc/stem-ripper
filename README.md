@@ -14,7 +14,8 @@ Give it a YouTube URL or a local audio file and it produces:
 
 ## Requirements
 
-- Windows 10 or 11 (the setup script is PowerShell; the pipeline itself is plain Python)
+- Windows 10 or 11 (`setup.ps1`), or macOS / Linux (`setup.sh`). The pipeline itself is
+  plain Python. macOS is tested on Apple Silicon only.
 - Python 3.10. Basic Pitch 0.4.0 only supports Python 3.8 to 3.11 and only uses
   the light ONNX runtime on Windows below 3.11, so both environments use 3.10.
   Install with `winget install Python.Python.3.10`.
@@ -25,6 +26,20 @@ Give it a YouTube URL or a local audio file and it produces:
   machines without a GPU.
 
 ## Setup
+
+macOS / Linux:
+
+```bash
+brew install python@3.10 ffmpeg git   # macOS; use your package manager on Linux
+./setup.sh
+```
+
+On macOS there is no CUDA build of PyTorch, so `requirements-main.txt` installs the plain
+CPU wheel there. Demucs and ADTOF run on the CPU; audio-separator (Roformer and DrumSep)
+uses Apple's GPU (MPS) on its own. On the 16 second test song, fine mode takes about 97 s
+on an M-series Mac.
+
+Windows:
 
 ```powershell
 cd stem-pipeline

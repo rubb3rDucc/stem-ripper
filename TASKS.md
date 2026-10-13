@@ -53,10 +53,15 @@ Observations and follow-ups logged per file.
 - `stage_info` now runs before the MIDI stages because they need the BPM. On
   resume the BPM is parsed back out of `info.txt`.
 
-## setup.ps1
+## setup.ps1 / setup.sh
 
-- Only Windows is covered. A `setup.sh` for macOS or Linux would be the same two
-  venv creations with `bin/python` paths; `pipeline.py` already handles both layouts.
+- `setup.sh` covers macOS and Linux (tested on Apple Silicon only). Linux is
+  untested.
+- On macOS `detect_device` returns `cpu` (no CUDA), so Demucs and ADTOF run on the
+  CPU. Demucs `-d mps` and ADTOF `--device mps` were not tried. audio-separator
+  uses MPS by itself, and `--cpu` does not stop that (it only hides CUDA).
+- Basic Pitch on macOS pulls `coremltools`, which prints a harmless scikit-learn
+  version warning.
 - Re-running on existing environments re-runs pip against the pinned files, which
   is the intended upgrade path after editing a requirements file.
 
@@ -84,6 +89,54 @@ Observations and follow-ups logged per file.
   needed. Only matters if someone switches to an ONNX model (MDX-Net family).
 - audio-separator resolved cleanly against torch 2.14.1+cu126, demucs 4.1.0 and
   numpy 2.2.6 (`pip check` clean), so it shares the main env.
+
+## Planned: bass tab and learning chart (`--tab`, not built)
+
+Goal: turn the bass MIDI into a chart a learner can play from. Mock-ups of the
+target output were agreed in discussion; ASCII `.txt` first, Guitar Pro `.gp5`
+later.
+
+Output per song: `bass_tab.txt` with a header (key, BPM, time signature,
+tuning), a section map, then per-section systems. Each system has rows for chord
+name, Roman numeral, rhythm (q/e/h markers), the four-string tab (G/D/A/E) and a
+beat-count line. A per-bar table lists notes, scale degrees and chord-tone roles.
+
+Steps, in build order:
+
+1. **Clean the bass MIDI.** Quantize to the detected BPM grid, drop notes below a
+   minimum length and velocity, merge octave-error duplicates. Basic Pitch on bass
+   is noisy, so everything below depends on this.
+2. **Fret assignment.** Map each note to a string and fret for standard tuning
+   (E A D G, with a tuning option for drop D and 5-string). Score candidates by
+   hand movement from the previous note, and keep the top two or three so they
+   can be shown as alternate fingerings (prefer open strings and fewer shifts).
+3. **Rhythm row.** Derive note lengths (q, e, h) from the quantized MIDI and print
+   them above the tab with a beat-count line.
+4. **Chord detection.** The bass stem only gives roots. Run chroma plus template
+   matching (librosa), or a model such as madmom or autochord, on the guitar,
+   piano and other stems or the original mix. Use the bass root as a cross-check
+   and for slash chords.
+5. **Theory annotations.** From the key and chords: Roman numerals, scale degrees,
+   chord-tone roles, scale name. Lookup only, no free-text commentary.
+6. **Section detection.** Self-similarity on the chord and chroma sequence to
+   label intro, verse, chorus, outro and collapse repeats ("play x2"). Weakest
+   step on songs without clear repeats, so allow hand-edited labels.
+7. **Confidence and checking.** Flag low-confidence notes and chords in the
+   output. Render the cleaned MIDI to audio so it can be compared with the stem.
+8. **Output formats.** ASCII first, then `.gp5` via the `guitarpro` package for
+   playback in TuxGuitar.
+
+Open questions:
+
+- New dependencies (`guitarpro`, `music21` or `madmom`) probably belong in the
+  Basic Pitch env or a third env, depending on their numpy pins.
+- Time signature is assumed 4/4. Detection is unreliable, so add a flag.
+- `stage_info` BPM is approximate (see the 117.5 vs 120 note above), which hurts
+  quantization. Consider a second tempo candidate or a manual `--bpm`.
+
+Learner extras, in priority order after the above: slowed-down playback with
+loops, a viewer that follows the audio, play-along mixes (mix minus bass, click
+track), difficulty rating, simplified root-only line.
 
 ## Later phases (not built)
 
