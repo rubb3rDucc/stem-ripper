@@ -6,8 +6,8 @@ Usage:
     python tools/bass_tab.py output/<song> --bpm 120 --shift 2
 
 Writes bass_tab.txt into the song folder (or next to the MIDI file) and prints
-it. Needs pretty_midi, numpy and librosa, so run it with the main environment:
-    .venv/bin/python tools/bass_tab.py output/<song>
+it. Needs pretty_midi, numpy and librosa from the main environment; like
+pipeline.py it can be started with any Python and re-launches itself in .venv.
 
 Steps:
 1. Cleanup. Basic Pitch on bass leaves octave ghosts and short quiet notes. Notes
@@ -33,8 +33,32 @@ downbeat detection, time signatures other than 4/4.
 
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
+
+
+MAIN_VENV = Path(__file__).resolve().parent.parent / ".venv"
+
+
+def ensure_running_in_main_venv():
+    """Re-launch this script with the main venv's Python if needed (same as pipeline.py)."""
+    if sys.platform == "win32":
+        main_python = MAIN_VENV / "Scripts" / "python.exe"
+    else:
+        main_python = MAIN_VENV / "bin" / "python"
+    if not main_python.exists():
+        sys.exit("The main virtual environment is missing (%s).\n"
+                 "Run setup.ps1 (Windows) or setup.sh (macOS / Linux) first." % MAIN_VENV)
+    if Path(sys.executable).resolve() == main_python.resolve():
+        return
+    result = subprocess.run([str(main_python), str(Path(__file__).resolve())] + sys.argv[1:])
+    sys.exit(result.returncode)
+
+
+# Before the imports below: the Python that started the script may not have them.
+if __name__ == "__main__":
+    ensure_running_in_main_venv()
 
 import numpy as np
 import pretty_midi
@@ -376,6 +400,9 @@ def build_grid(arguments, song_dir, onsets, midi_bpm):
 
 
 def main():
+    # A redirected Windows console uses the ANSI code page, which cannot encode
+    # every song title. Print what it can rather than crash; the file is UTF-8.
+    sys.stdout.reconfigure(errors="replace")
     arguments = parse_arguments()
     midi_path, song_dir, out_path = resolve_paths(arguments.source, arguments.out)
     tuning = parse_tuning(arguments.tuning)

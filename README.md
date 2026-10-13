@@ -177,6 +177,24 @@ ADTOF outputs five General MIDI drum notes on channel 10:
 FPC and most drum plugins follow this map. Note 35 is "Acoustic Bass Drum". If your
 kit only responds to 36, move the kick notes up one semitone in the piano roll.
 
+## Bass tab
+
+`tools/bass_tab.py` turns `midi/bass.mid` into ASCII bass tab and writes
+`bass_tab.txt` into the song folder. Like `pipeline.py` it re-launches itself
+inside `.venv`, so any Python can start it:
+
+```powershell
+python tools\bass_tab.py "output\<song>"
+python tools\bass_tab.py "output\<song>" --shift 2           # move bar lines
+python tools\bass_tab.py "output\<song>" --tuning D1,A1,D2,G2 # drop D
+```
+
+Notes snap to beats tracked from the drums stem, so songs without a click still
+line up. The header reports how many notes landed on the grid; under about 75%,
+expect some notes in the wrong place within the bar. Fingerings keep the hand in
+one 4-fret position where possible. Bar 1 starts on the beat of the first bass
+note, so a pickup needs `--shift`. Run with `--help` for the other options.
+
 ## Testing the setup
 
 A synthetic 16 second song (120 BPM, A minor) is included for checking that

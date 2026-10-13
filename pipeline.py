@@ -161,7 +161,7 @@ def ensure_running_in_main_venv():
     if not main_python.exists():
         raise PipelineError(
             "The main virtual environment is missing (%s).\n"
-            "Run setup.ps1 from the stem-pipeline folder first." % MAIN_VENV
+            "Run setup.ps1 (Windows) or setup.sh (macOS / Linux) from the stem-pipeline folder first." % MAIN_VENV
         )
     current = Path(sys.executable).resolve()
     if current == main_python.resolve():
